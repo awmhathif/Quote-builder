@@ -1,0 +1,425 @@
+/* General Body and Page Styling */
+body {
+    font-family: 'Orbitron', sans-serif;
+    background-color: #0a0a1f; /* Dark neon background */
+    color: #00ffff; /* Neon cyan text */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+.container {
+    width: 95%;
+    max-width: 1600px;
+    background-color: #101030; /* Slightly lighter neon background */
+    border: 2px solid #00ffff;
+    box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff inset;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    font-family: 'Monoton', cursive;
+    font-size: 3em;
+    color: #ff00ff; /* Neon pink */
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff00ff, 0 0 20px #ff00ff;
+    margin: 0;
+}
+
+/* Layout for Controls and Preview */
+.quote-builder-layout {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 20px;
+}
+
+.controls-panel {
+    flex: 1; /* Takes 1 part of the space */
+    min-width: 320px; /* Minimum width before wrapping */
+    background-color: #1a1a3a;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #00ccff;
+    box-shadow: 0 0 10px #00ccff;
+}
+
+.preview-panel {
+    flex: 2; /* Takes 2 parts of the space */
+    min-width: 320px; /* Minimum width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1a1a3a;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #ff00ff;
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+h2 {
+    color: #00ff99; /* Neon green */
+    text-shadow: 0 0 5px #00ff99;
+    border-bottom: 2px solid #00ff99;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+/* Control Group Styling */
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #ccffff; /* Lighter cyan */
+}
+
+.control-group input[type="text"],
+.control-group textarea,
+.control-group select {
+    width: calc(100% - 22px); /* Account for padding and border */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #00ffff;
+    background-color: #0f0f28;
+    color: #ffffff;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow: 0 0 5px #00ffff inset;
+}
+.control-group input[type="number"]{
+    width: 70px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #00ffff;
+    background-color: #0f0f28;
+    color: #ffffff;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow: 0 0 5px #00ffff inset;
+    margin-right: 10px;
+}
+
+
+.control-group textarea {
+    resize: vertical;
+}
+
+.control-group input[type="color"] {
+    width: calc(100% - 22px);
+    height: 40px;
+    padding: 0; /* Remove default padding for color input */
+    border: 1px solid #00ffff;
+    border-radius: 5px;
+    cursor: pointer;
+    -webkit-appearance: none; /* For Chrome/Safari */
+    -moz-appearance: none; /* For Firefox */
+    appearance: none;
+    background-color: transparent; /* Make background transparent to see the color value */
+}
+.control-group input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 5px;
+}
+.control-group input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
+}
+.control-group input[type="color"]::-moz-color-swatch { /* Firefox */
+    border: none;
+    border-radius: 5px;
+}
+
+
+.control-group input[type="range"] {
+    width: calc(100% - 70px); /* Adjust width to fit span next to it */
+    cursor: pointer;
+    vertical-align: middle;
+}
+.control-group input[type="range"] + span {
+    display: inline-block;
+    width: 50px; /* Space for the value */
+    margin-left: 10px;
+    color: #ccffff;
+    vertical-align: middle;
+}
+
+
+.control-group input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2); /* Make checkbox slightly larger */
+    accent-color: #ff00ff; /* Neon pink for checkbox */
+}
+.control-group input[type="checkbox"] + label {
+    display: inline; /* Keep label on the same line */
+    font-weight: normal;
+}
+
+
+.button-group button {
+    padding: 8px 12px;
+    margin-right: 5px;
+    border: 1px solid #00ffff;
+    background-color: #0f0f28;
+    color: #00ffff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.button-group button.active {
+    background-color: #00ffff;
+    color: #101030;
+    box-shadow: 0 0 10px #00ffff;
+}
+.button-group button:hover:not(.active) {
+    background-color: #009999;
+    box-shadow: 0 0 8px #009999;
+}
+
+/* Action Buttons */
+.action-buttons {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+}
+
+.action-btn {
+    flex-grow: 1; /* Allow buttons to grow and fill space */
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: 'Audiowide', cursive;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+
+#downloadBtn {
+    background: linear-gradient(45deg, #00ff99, #00ffff);
+    color: #101030;
+    box-shadow: 0 0 8px #00ff99, 0 0 12px #00ffff;
+}
+#downloadBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px #00ff99, 0 0 18px #00ffff, 0 0 25px #00ffff;
+}
+
+#saveToHistoryBtn {
+    background: linear-gradient(45deg, #ff00ff, #ff66ff);
+    color: #101030;
+    box-shadow: 0 0 8px #ff00ff, 0 0 12px #ff66ff;
+}
+#saveToHistoryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px #ff00ff, 0 0 18px #ff66ff, 0 0 25px #ff66ff;
+}
+
+/* Canvas Styling */
+#quoteCanvas {
+    border: 2px dashed #ff00ff;
+    border-radius: 10px;
+    background-color: #000; /* Default canvas background if no color/image set */
+    max-width: 100%; /* Ensure canvas is responsive */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove extra space below canvas */
+    margin-bottom: 15px;
+}
+
+.canvas-size-controls {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.canvas-size-controls label {
+    color: #ccffff;
+}
+.canvas-size-controls button {
+    padding: 8px 12px;
+    border: 1px solid #00ffff;
+    background-color: #007777;
+    color: #ffffff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.canvas-size-controls button:hover {
+    background-color: #00aaaa;
+}
+
+
+/* History Panel */
+.history-panel {
+    margin-top: 30px;
+    background-color: #1a1a3a;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #00ff99;
+    box-shadow: 0 0 10px #00ff99;
+}
+.history-panel h2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-btn, .clear-btn {
+    padding: 6px 10px;
+    font-size: 0.8em;
+    border: 1px solid;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+.toggle-btn {
+    border-color: #00ffff;
+    background-color: transparent;
+    color: #00ffff;
+}
+.toggle-btn:hover {
+    background-color: #00ffff;
+    color: #101030;
+}
+.clear-btn {
+    border-color: #ff3333;
+    background-color: transparent;
+    color: #ff3333;
+}
+.clear-btn:hover {
+    background-color: #ff3333;
+    color: #101030;
+}
+
+.history-items {
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
+}
+.history-items::-webkit-scrollbar {
+    width: 8px;
+}
+.history-items::-webkit-scrollbar-track {
+    background: #0f0f28;
+    border-radius: 4px;
+}
+.history-items::-webkit-scrollbar-thumb {
+    background: #00ffff;
+    border-radius: 4px;
+}
+.history-items::-webkit-scrollbar-thumb:hover {
+    background: #00aaaa;
+}
+
+
+.history-item {
+    background-color: #101030;
+    border: 1px solid #ff00ff;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+    overflow: hidden; /* To contain the small canvas */
+}
+.history-item:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 10px #ff00ff;
+}
+.history-item canvas { /* Small preview canvas in history */
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+.history-item p {
+    font-size: 0.9em;
+    color: #ccffff;
+    margin: 5px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.history-item .delete-history-item-btn {
+    display: block;
+    margin: 5px auto 0;
+    padding: 3px 6px;
+    font-size: 0.7em;
+    background-color: #500000;
+    color: #ffaaaa;
+    border: 1px solid #ff0000;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.history-item .delete-history-item-btn:hover {
+    background-color: #ff0000;
+    color: #101030;
+}
+
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #00ffff44;
+}
+footer p {
+    color: #00ffff99;
+    font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quote-builder-layout {
+        flex-direction: column; /* Stack controls and preview */
+    }
+    header h1 {
+        font-size: 2.5em;
+    }
+    .controls-panel, .preview-panel {
+        width: 100%; /* Full width on smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 15px;
+    }
+    header h1 {
+        font-size: 2em;
+    }
+    .control-group input[type="range"] {
+        width: calc(100% - 60px); /* Further adjust for smaller screens */
+    }
+    .control-group input[type="range"] + span {
+        width: 40px;
+    }
+    .action-buttons {
+        flex-direction: column; /* Stack action buttons */
+    }
+    .action-btn {
+        width: 100%; /* Full width buttons */
+    }
+    .history-items {
+        grid-template-columns: 1fr; /* Single column history on very small screens */
+    }
+}

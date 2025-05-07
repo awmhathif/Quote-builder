@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon  Quote  Builder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Bungee&family=Lobster&family=Monoton&family=Orbitron:wght@400;700&family=Pacifico&family=Press+Start+2P&family=Sacramento&family=Special+Elite&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Neon Quote Builder</h1>
+        </header>
+
+        <main class="quote-builder-layout">
+            <aside class="controls-panel">
+                <h2>Customize Your Quote</h2>
+
+                <div class="control-group">
+                    <label for="quoteText">Quote Text:</label>
+                    <textarea id="quoteText" rows="4" placeholder="Enter your quote here..."></textarea>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontFamily">Font Family:</label>
+                    <select id="fontFamily">
+                        <option value="'Press Start 2P', cursive">Press Start 2P</option>
+                        <option value="'Monoton', cursive">Monoton</option>
+                        <option value="'Orbitron', sans-serif">Orbitron</option>
+                        <option value="'Audiowide', cursive">Audiowide</option>
+                        <option value="'Bungee', cursive">Bungee</option>
+                        <option value="'Lobster', cursive">Lobster</option>
+                        <option value="'Pacifico', cursive">Pacifico</option>
+                        <option value="'Sacramento', cursive">Sacramento</option>
+                        <option value="'Special Elite', cursive">Special Elite</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontSize">Font Size:</label>
+                    <input type="range" id="fontSize" min="10" max="150" value="40">
+                    <span id="fontSizeValue">40px</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontColor">Font Color:</label>
+                    <input type="color" id="fontColor" value="#00FFFF">
+                </div>
+
+                <div class="control-group">
+                    <label>Text Alignment:</label>
+                    <div class="button-group">
+                        <button class="align-btn active" data-align="left">Left</button>
+                        <button class="align-btn" data-align="center">Center</button>
+                        <button class="align-btn" data-align="right">Right</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="textYPosition">Vertical Position:</label>
+                    <input type="range" id="textYPosition" min="0" max="100" value="50">
+                    <span id="textYPositionValue">50%</span>
+                </div>
+
+                <h3>Text Effects</h3>
+                <div class="control-group">
+                    <input type="checkbox" id="textGlow" checked>
+                    <label for="textGlow">Text Glow</label>
+                </div>
+                <div class="control-group" id="glowOptions">
+                    <label for="glowColor">Glow Color:</label>
+                    <input type="color" id="glowColor" value="#FF00FF">
+                    <label for="glowBlur">Glow Blur:</label>
+                    <input type="range" id="glowBlur" min="0" max="50" value="15">
+                    <span id="glowBlurValue">15</span>
+                </div>
+
+                <div class="control-group">
+                    <input type="checkbox" id="textOutline">
+                    <label for="textOutline">Text Outline</label>
+                </div>
+                <div class="control-group" id="outlineOptions" style="display: none;">
+                    <label for="outlineColor">Outline Color:</label>
+                    <input type="color" id="outlineColor" value="#FFFFFF">
+                    <label for="outlineWidth">Outline Width:</label>
+                    <input type="range" id="outlineWidth" min="1" max="10" value="2">
+                    <span id="outlineWidthValue">2</span>
+                </div>
+
+                <h3>Background</h3>
+                <div class="control-group">
+                    <label for="bgType">Background Type:</label>
+                    <select id="bgType">
+                        <option value="color">Solid Color</option>
+                        <option value="image">Custom Image</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="bgColorGroup">
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#101030">
+                </div>
+
+                <div class="control-group" id="bgImageGroup" style="display: none;">
+                    <label for="bgImage">Upload Background Image:</label>
+                    <input type="file" id="bgImage" accept="image/*">
+                </div>
+                 <div class="control-group">
+                    <label for="imageBrightness">Image Brightness:</label>
+                    <input type="range" id="imageBrightness" min="0" max="200" value="100">
+                    <span id="imageBrightnessValue">100%</span>
+                </div>
+
+
+                <div class="action-buttons">
+                    <button id="downloadBtn" class="action-btn">Download Image</button>
+                    <button id="saveToHistoryBtn" class="action-btn">Save to History</button>
+                </div>
+
+            </aside>
+
+            <section class="preview-panel">
+                <h2>Live Preview</h2>
+                <canvas id="quoteCanvas" width="600" height="400"></canvas>
+                 <div class="canvas-size-controls">
+                    <label for="canvasWidth">Canvas Width:</label>
+                    <input type="number" id="canvasWidth" value="600" min="100" max="2000">
+                    <label for="canvasHeight">Canvas Height:</label>
+                    <input type="number" id="canvasHeight" value="400" min="100" max="2000">
+                    <button id="applyCanvasSize">Apply Size</button>
+                </div>
+            </section>
+        </main>
+
+        <section class="history-panel">
+            <h2>Quote History <button id="toggleHistory" class="toggle-btn">Show/Hide</button> <button id="clearHistoryBtn" class="action-btn clear-btn">Clear History</button></h2>
+            <div id="quoteHistory" class="history-items" style="display: none;">
+                </div>
+        </section>
+
+        <footer>
+            <p>Created with Neon Magic ✨</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
