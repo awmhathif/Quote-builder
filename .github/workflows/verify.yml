@@ -1,0 +1,46 @@
+name: Verify Quote Studio
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check JavaScript syntax
+        run: node --check script.js
+
+      - name: Check HTML and DOM references
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import re
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          js = Path('script.js').read_text(encoding='utf-8')
+
+          class Parser(HTMLParser):
+              pass
+
+          Parser().feed(html)
+          ids = set(re.findall(r'id=["\']([^"\']+)["\']', html))
+          refs = set(re.findall(r'getElementById\(["\']([^"\']+)["\']\)', js))
+          missing = sorted(refs - ids)
+          if missing:
+              raise SystemExit(f'Missing DOM ids referenced by script.js: {missing}')
+
+          for required in ('index.html', 'style.css', 'script.js', 'README.md'):
+              if not Path(required).is_file():
+                  raise SystemExit(f'Missing required file: {required}')
+
+          print(f'HTML parsed; {len(refs)} DOM id references resolved.')
+          PY
