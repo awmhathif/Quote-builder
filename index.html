@@ -1,153 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon  Quote  Builder</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Bungee&family=Lobster&family=Monoton&family=Orbitron:wght@400;700&family=Pacifico&family=Press+Start+2P&family=Sacramento&family=Special+Elite&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Quote Studio — a polished browser-based quote image designer with social presets, templates, typography controls and local drafts.">
+  <title>Quote Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Neon Quote Builder</h1>
-        </header>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">Q</div>
+        <div>
+          <div class="brand">Quote Studio</div>
+          <div class="brand-sub">Design quote graphics in the browser</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="ghost-btn" id="undoBtn" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+        <button class="ghost-btn" id="redoBtn" title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
+        <button class="ghost-btn" id="saveDraftBtn" title="Save draft (Ctrl/Cmd+S)">Save draft</button>
+        <button class="primary-btn" id="exportTopBtn">Export</button>
+      </div>
+    </header>
 
-        <main class="quote-builder-layout">
-            <aside class="controls-panel">
-                <h2>Customize Your Quote</h2>
-
-                <div class="control-group">
-                    <label for="quoteText">Quote Text:</label>
-                    <textarea id="quoteText" rows="4" placeholder="Enter your quote here..."></textarea>
-                </div>
-
-                <div class="control-group">
-                    <label for="fontFamily">Font Family:</label>
-                    <select id="fontFamily">
-                        <option value="'Press Start 2P', cursive">Press Start 2P</option>
-                        <option value="'Monoton', cursive">Monoton</option>
-                        <option value="'Orbitron', sans-serif">Orbitron</option>
-                        <option value="'Audiowide', cursive">Audiowide</option>
-                        <option value="'Bungee', cursive">Bungee</option>
-                        <option value="'Lobster', cursive">Lobster</option>
-                        <option value="'Pacifico', cursive">Pacifico</option>
-                        <option value="'Sacramento', cursive">Sacramento</option>
-                        <option value="'Special Elite', cursive">Special Elite</option>
-                        <option value="Arial, sans-serif">Arial</option>
-                        <option value="'Times New Roman', serif">Times New Roman</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label for="fontSize">Font Size:</label>
-                    <input type="range" id="fontSize" min="10" max="150" value="40">
-                    <span id="fontSizeValue">40px</span>
-                </div>
-
-                <div class="control-group">
-                    <label for="fontColor">Font Color:</label>
-                    <input type="color" id="fontColor" value="#00FFFF">
-                </div>
-
-                <div class="control-group">
-                    <label>Text Alignment:</label>
-                    <div class="button-group">
-                        <button class="align-btn active" data-align="left">Left</button>
-                        <button class="align-btn" data-align="center">Center</button>
-                        <button class="align-btn" data-align="right">Right</button>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <label for="textYPosition">Vertical Position:</label>
-                    <input type="range" id="textYPosition" min="0" max="100" value="50">
-                    <span id="textYPositionValue">50%</span>
-                </div>
-
-                <h3>Text Effects</h3>
-                <div class="control-group">
-                    <input type="checkbox" id="textGlow" checked>
-                    <label for="textGlow">Text Glow</label>
-                </div>
-                <div class="control-group" id="glowOptions">
-                    <label for="glowColor">Glow Color:</label>
-                    <input type="color" id="glowColor" value="#FF00FF">
-                    <label for="glowBlur">Glow Blur:</label>
-                    <input type="range" id="glowBlur" min="0" max="50" value="15">
-                    <span id="glowBlurValue">15</span>
-                </div>
-
-                <div class="control-group">
-                    <input type="checkbox" id="textOutline">
-                    <label for="textOutline">Text Outline</label>
-                </div>
-                <div class="control-group" id="outlineOptions" style="display: none;">
-                    <label for="outlineColor">Outline Color:</label>
-                    <input type="color" id="outlineColor" value="#FFFFFF">
-                    <label for="outlineWidth">Outline Width:</label>
-                    <input type="range" id="outlineWidth" min="1" max="10" value="2">
-                    <span id="outlineWidthValue">2</span>
-                </div>
-
-                <h3>Background</h3>
-                <div class="control-group">
-                    <label for="bgType">Background Type:</label>
-                    <select id="bgType">
-                        <option value="color">Solid Color</option>
-                        <option value="image">Custom Image</option>
-                    </select>
-                </div>
-
-                <div class="control-group" id="bgColorGroup">
-                    <label for="bgColor">Background Color:</label>
-                    <input type="color" id="bgColor" value="#101030">
-                </div>
-
-                <div class="control-group" id="bgImageGroup" style="display: none;">
-                    <label for="bgImage">Upload Background Image:</label>
-                    <input type="file" id="bgImage" accept="image/*">
-                </div>
-                 <div class="control-group">
-                    <label for="imageBrightness">Image Brightness:</label>
-                    <input type="range" id="imageBrightness" min="0" max="200" value="100">
-                    <span id="imageBrightnessValue">100%</span>
-                </div>
-
-
-                <div class="action-buttons">
-                    <button id="downloadBtn" class="action-btn">Download Image</button>
-                    <button id="saveToHistoryBtn" class="action-btn">Save to History</button>
-                </div>
-
-            </aside>
-
-            <section class="preview-panel">
-                <h2>Live Preview</h2>
-                <canvas id="quoteCanvas" width="600" height="400"></canvas>
-                 <div class="canvas-size-controls">
-                    <label for="canvasWidth">Canvas Width:</label>
-                    <input type="number" id="canvasWidth" value="600" min="100" max="2000">
-                    <label for="canvasHeight">Canvas Height:</label>
-                    <input type="number" id="canvasHeight" value="400" min="100" max="2000">
-                    <button id="applyCanvasSize">Apply Size</button>
-                </div>
-            </section>
-        </main>
-
-        <section class="history-panel">
-            <h2>Quote History <button id="toggleHistory" class="toggle-btn">Show/Hide</button> <button id="clearHistoryBtn" class="action-btn clear-btn">Clear History</button></h2>
-            <div id="quoteHistory" class="history-items" style="display: none;">
-                </div>
+    <main class="studio">
+      <aside class="controls" aria-label="Quote design controls">
+        <section class="panel-section">
+          <div class="section-heading">
+            <div><span class="step">01</span><h2>Content</h2></div>
+            <span id="charCount" class="subtle">0 chars</span>
+          </div>
+          <label class="field-label" for="quoteText">Quote</label>
+          <textarea id="quoteText" rows="5" maxlength="700" placeholder="Write something worth remembering…">The best way to understand an idea is to build it.</textarea>
+          <label class="field-label" for="authorText">Author / source</label>
+          <input id="authorText" type="text" maxlength="100" value="Awm Hathif" placeholder="Optional">
         </section>
 
-        <footer>
-            <p>Created with Neon Magic ✨</p>
-        </footer>
-    </div>
+        <section class="panel-section">
+          <div class="section-heading"><div><span class="step">02</span><h2>Canvas</h2></div></div>
+          <label class="field-label" for="sizePreset">Preset</label>
+          <select id="sizePreset">
+            <option value="square">Square · 1080 × 1080</option>
+            <option value="portrait" selected>Portrait · 1080 × 1350</option>
+            <option value="story">Story / Reel · 1080 × 1920</option>
+            <option value="landscape">Landscape · 1600 × 900</option>
+            <option value="og">Social preview · 1200 × 630</option>
+            <option value="custom">Custom size</option>
+          </select>
+          <div class="two-col custom-size" id="customSizeGroup" hidden>
+            <div><label class="field-label" for="canvasWidth">Width</label><input id="canvasWidth" type="number" min="320" max="4096" value="1080"></div>
+            <div><label class="field-label" for="canvasHeight">Height</label><input id="canvasHeight" type="number" min="320" max="4096" value="1350"></div>
+          </div>
+          <button class="secondary-btn full" id="applyCustomSize" hidden>Apply custom size</button>
+        </section>
 
-    <script src="script.js"></script>
+        <section class="panel-section">
+          <div class="section-heading"><div><span class="step">03</span><h2>Typography</h2></div></div>
+          <div class="two-col">
+            <div>
+              <label class="field-label" for="fontFamily">Font</label>
+              <select id="fontFamily">
+                <option value="Inter">Inter</option>
+                <option value="Playfair Display" selected>Playfair Display</option>
+                <option value="DM Serif Display">DM Serif Display</option>
+                <option value="Space Grotesk">Space Grotesk</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Arial">Arial</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="fontWeight">Weight</label>
+              <select id="fontWeight">
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600" selected>Semibold</option>
+                <option value="700">Bold</option>
+                <option value="800">Extra bold</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="range-field">
+            <div class="range-head"><label for="fontSize">Size</label><output id="fontSizeValue">72 px</output></div>
+            <input id="fontSize" type="range" min="24" max="150" value="72">
+          </div>
+          <div class="range-field">
+            <div class="range-head"><label for="lineHeight">Line height</label><output id="lineHeightValue">1.18</output></div>
+            <input id="lineHeight" type="range" min="90" max="180" value="118">
+          </div>
+          <div class="range-field">
+            <div class="range-head"><label for="letterSpacing">Letter spacing</label><output id="letterSpacingValue">0 px</output></div>
+            <input id="letterSpacing" type="range" min="-4" max="16" value="0">
+          </div>
+          <div class="range-field">
+            <div class="range-head"><label for="textWidth">Text width</label><output id="textWidthValue">74%</output></div>
+            <input id="textWidth" type="range" min="35" max="92" value="74">
+          </div>
+
+          <div class="control-row">
+            <span class="field-label inline-label">Align</span>
+            <div class="segmented" id="alignGroup">
+              <button data-align="left">Left</button>
+              <button data-align="center" class="active">Center</button>
+              <button data-align="right">Right</button>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="range-field compact"><div class="range-head"><label for="textX">X</label><output id="textXValue">50%</output></div><input id="textX" type="range" min="10" max="90" value="50"></div>
+            <div class="range-field compact"><div class="range-head"><label for="textY">Y</label><output id="textYValue">50%</output></div><input id="textY" type="range" min="10" max="90" value="50"></div>
+          </div>
+
+          <div class="two-col">
+            <div><label class="field-label" for="textColor">Text color</label><div class="color-field"><input id="textColor" type="color" value="#f8fafc"><span id="textColorHex">#F8FAFC</span></div></div>
+            <div><label class="field-label" for="authorColor">Author color</label><div class="color-field"><input id="authorColor" type="color" value="#cbd5e1"><span id="authorColorHex">#CBD5E1</span></div></div>
+          </div>
+
+          <div class="toggle-row"><div><b>Text shadow</b><span>Add separation on busy backgrounds</span></div><label class="switch"><input id="shadowEnabled" type="checkbox" checked><span></span></label></div>
+          <div class="range-field" id="shadowStrengthGroup"><div class="range-head"><label for="shadowStrength">Shadow strength</label><output id="shadowStrengthValue">34%</output></div><input id="shadowStrength" type="range" min="0" max="100" value="34"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading"><div><span class="step">04</span><h2>Background</h2></div></div>
+          <label class="field-label" for="bgMode">Type</label>
+          <select id="bgMode">
+            <option value="solid">Solid</option>
+            <option value="gradient" selected>Gradient</option>
+            <option value="image">Image</option>
+          </select>
+
+          <div id="solidControls" hidden>
+            <label class="field-label" for="bgColor">Background color</label>
+            <div class="color-field"><input id="bgColor" type="color" value="#0f172a"><span id="bgColorHex">#0F172A</span></div>
+          </div>
+
+          <div id="gradientControls">
+            <div class="two-col">
+              <div><label class="field-label" for="gradientA">Color A</label><div class="color-field"><input id="gradientA" type="color" value="#0f172a"><span id="gradientAHex">#0F172A</span></div></div>
+              <div><label class="field-label" for="gradientB">Color B</label><div class="color-field"><input id="gradientB" type="color" value="#312e81"><span id="gradientBHex">#312E81</span></div></div>
+            </div>
+            <div class="range-field"><div class="range-head"><label for="gradientAngle">Angle</label><output id="gradientAngleValue">135°</output></div><input id="gradientAngle" type="range" min="0" max="360" value="135"></div>
+          </div>
+
+          <div id="imageControls" hidden>
+            <label class="upload-card" for="bgImage"><b>Choose background image</b><span>JPG, PNG or WebP · processed locally</span></label>
+            <input id="bgImage" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <div class="range-field"><div class="range-head"><label for="imageZoom">Image zoom</label><output id="imageZoomValue">100%</output></div><input id="imageZoom" type="range" min="100" max="220" value="100"></div>
+          </div>
+
+          <div class="range-field"><div class="range-head"><label for="overlayOpacity">Dark overlay</label><output id="overlayOpacityValue">12%</output></div><input id="overlayOpacity" type="range" min="0" max="90" value="12"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading"><div><span class="step">05</span><h2>Templates</h2></div><button class="text-btn" id="resetBtn">Reset</button></div>
+          <div class="template-grid">
+            <button class="template-card" data-template="midnight"><span class="swatch midnight"></span><b>Midnight</b><small>Bold serif</small></button>
+            <button class="template-card" data-template="paper"><span class="swatch paper"></span><b>Paper</b><small>Editorial</small></button>
+            <button class="template-card" data-template="electric"><span class="swatch electric"></span><b>Electric</b><small>Modern</small></button>
+            <button class="template-card" data-template="mono"><span class="swatch mono"></span><b>Mono</b><small>Minimal</small></button>
+          </div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <div class="workspace-head">
+          <div>
+            <span class="workspace-kicker">LIVE PREVIEW</span>
+            <h1 id="canvasLabel">Portrait · 1080 × 1350</h1>
+          </div>
+          <div class="zoom-pill"><span class="dot"></span><span id="previewScale">Fit</span></div>
+        </div>
+
+        <div class="canvas-stage" id="canvasStage">
+          <canvas id="quoteCanvas" width="1080" height="1350" aria-label="Quote image preview"></canvas>
+        </div>
+
+        <div class="export-bar">
+          <div class="export-options">
+            <div><label for="exportFormat">Format</label><select id="exportFormat"><option value="png">PNG</option><option value="jpeg">JPEG</option></select></div>
+            <div id="qualityWrap" hidden><label for="jpegQuality">Quality</label><select id="jpegQuality"><option value="0.92" selected>92%</option><option value="0.85">85%</option><option value="0.75">75%</option></select></div>
+          </div>
+          <button class="primary-btn export-btn" id="exportBtn">Export image</button>
+        </div>
+
+        <section class="drafts-panel">
+          <div class="drafts-head"><div><span class="workspace-kicker">LOCAL ONLY</span><h2>Saved drafts</h2></div><button class="text-btn" id="clearDraftsBtn">Clear all</button></div>
+          <div id="draftList" class="draft-list"><div class="empty-drafts">No saved drafts yet.</div></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
 </body>
 </html>

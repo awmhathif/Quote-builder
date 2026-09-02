@@ -1,505 +1,283 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
-    const quoteTextEl = document.getElementById('quoteText');
-    const fontFamilyEl = document.getElementById('fontFamily');
-    const fontSizeEl = document.getElementById('fontSize');
-    const fontSizeValueEl = document.getElementById('fontSizeValue');
-    const fontColorEl = document.getElementById('fontColor');
-    const textAlignButtons = document.querySelectorAll('.align-btn');
-    const textYPositionEl = document.getElementById('textYPosition');
-    const textYPositionValueEl = document.getElementById('textYPositionValue');
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
 
-    const textGlowEl = document.getElementById('textGlow');
-    const glowOptionsEl = document.getElementById('glowOptions');
-    const glowColorEl = document.getElementById('glowColor');
-    const glowBlurEl = document.getElementById('glowBlur');
-    const glowBlurValueEl = document.getElementById('glowBlurValue');
+const sizes = {
+  square: { label: 'Square', width: 1080, height: 1080 },
+  portrait: { label: 'Portrait', width: 1080, height: 1350 },
+  story: { label: 'Story / Reel', width: 1080, height: 1920 },
+  landscape: { label: 'Landscape', width: 1600, height: 900 },
+  og: { label: 'Social preview', width: 1200, height: 630 }
+};
 
-    const textOutlineEl = document.getElementById('textOutline');
-    const outlineOptionsEl = document.getElementById('outlineOptions');
-    const outlineColorEl = document.getElementById('outlineColor');
-    const outlineWidthEl = document.getElementById('outlineWidth');
-    const outlineWidthValueEl = document.getElementById('outlineWidthValue');
+const defaults = {
+  quote: 'The best way to understand an idea is to build it.',
+  author: 'Awm Hathif',
+  preset: 'portrait', width: 1080, height: 1350,
+  fontFamily: 'Playfair Display', fontSize: 72, fontWeight: 600,
+  lineHeight: 1.18, letterSpacing: 0, textWidth: 74,
+  align: 'center', textX: 50, textY: 50,
+  textColor: '#f8fafc', authorColor: '#cbd5e1',
+  shadowEnabled: true, shadowStrength: 34,
+  bgMode: 'gradient', bgColor: '#0f172a', gradientA: '#0f172a', gradientB: '#312e81', gradientAngle: 135,
+  bgImageSrc: '', imageZoom: 100, overlayOpacity: 12
+};
 
-    const bgTypeEl = document.getElementById('bgType');
-    const bgColorGroupEl = document.getElementById('bgColorGroup');
-    const bgColorEl = document.getElementById('bgColor');
-    const bgImageGroupEl = document.getElementById('bgImageGroup');
-    const bgImageEl = document.getElementById('bgImage');
-    const imageBrightnessEl = document.getElementById('imageBrightness');
-    const imageBrightnessValueEl = document.getElementById('imageBrightnessValue');
+const templates = {
+  midnight: { fontFamily:'Playfair Display',fontWeight:600,fontSize:76,lineHeight:1.15,letterSpacing:0,textWidth:72,align:'center',textX:50,textY:50,textColor:'#f8fafc',authorColor:'#cbd5e1',shadowEnabled:true,shadowStrength:32,bgMode:'gradient',gradientA:'#0f172a',gradientB:'#312e81',gradientAngle:135,overlayOpacity:10 },
+  paper: { fontFamily:'DM Serif Display',fontWeight:400,fontSize:74,lineHeight:1.18,letterSpacing:0,textWidth:70,align:'left',textX:18,textY:48,textColor:'#292524',authorColor:'#78716c',shadowEnabled:false,shadowStrength:0,bgMode:'solid',bgColor:'#efe8d9',overlayOpacity:0 },
+  electric: { fontFamily:'Space Grotesk',fontWeight:700,fontSize:70,lineHeight:1.08,letterSpacing:-1,textWidth:76,align:'left',textX:15,textY:68,textColor:'#ecfeff',authorColor:'#99f6e4',shadowEnabled:true,shadowStrength:28,bgMode:'gradient',gradientA:'#18181b',gradientB:'#0f766e',gradientAngle:125,overlayOpacity:8 },
+  mono: { fontFamily:'Inter',fontWeight:600,fontSize:62,lineHeight:1.22,letterSpacing:-1,textWidth:66,align:'center',textX:50,textY:50,textColor:'#fafafa',authorColor:'#a3a3a3',shadowEnabled:false,shadowStrength:0,bgMode:'solid',bgColor:'#111111',overlayOpacity:0 }
+};
 
+let state = structuredClone(defaults);
+let bgImage = null;
+let undoStack = [];
+let redoStack = [];
+let toastTimer;
 
-    const canvasEl = document.getElementById('quoteCanvas');
-    const ctx = canvasEl.getContext('2d');
+const canvas = $('#quoteCanvas');
+const ctx = canvas.getContext('2d');
 
-    const canvasWidthInput = document.getElementById('canvasWidth');
-    const canvasHeightInput = document.getElementById('canvasHeight');
-    const applyCanvasSizeBtn = document.getElementById('applyCanvasSize');
+function cloneState(value = state) { return JSON.parse(JSON.stringify(value)); }
+function toast(message) { const el=$('#toast'); el.textContent=message; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1700); }
+function clamp(n,min,max){ return Math.min(max,Math.max(min,n)); }
 
-    const downloadBtn = document.getElementById('downloadBtn');
-    const saveToHistoryBtn = document.getElementById('saveToHistoryBtn');
-    const toggleHistoryBtn = document.getElementById('toggleHistory');
-    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-    const quoteHistoryEl = document.getElementById('quoteHistory');
+function pushUndo() {
+  const snap = cloneState();
+  const last = undoStack[undoStack.length - 1];
+  if (last && JSON.stringify(last) === JSON.stringify(snap)) return;
+  undoStack.push(snap);
+  if (undoStack.length > 40) undoStack.shift();
+  redoStack = [];
+  updateUndoButtons();
+}
 
-    // --- State Variables ---
-    let currentBgImage = null;
-    let currentTextAlign = 'center';
-    let quoteHistory = JSON.parse(localStorage.getItem('quoteHistory')) || [];
+function updateUndoButtons(){ $('#undoBtn').disabled=undoStack.length===0; $('#redoBtn').disabled=redoStack.length===0; }
+function restoreSnapshot(snapshot){ state=cloneState(snapshot); loadImageFromState().then(()=>{syncUI();draw();}); }
+function undo(){ if(!undoStack.length)return; redoStack.push(cloneState()); restoreSnapshot(undoStack.pop()); updateUndoButtons(); }
+function redo(){ if(!redoStack.length)return; undoStack.push(cloneState()); restoreSnapshot(redoStack.pop()); updateUndoButtons(); }
 
-    // --- Initial Setup ---
-    const initialCanvasWidth = 600;
-    const initialCanvasHeight = 400;
-    canvasEl.width = initialCanvasWidth;
-    canvasEl.height = initialCanvasHeight;
-    canvasWidthInput.value = initialCanvasWidth;
-    canvasHeightInput.value = initialCanvasHeight;
+async function loadImageFromState(){
+  bgImage=null;
+  if(!state.bgImageSrc) return;
+  await new Promise(resolve=>{ const img=new Image(); img.onload=()=>{bgImage=img;resolve();}; img.onerror=resolve; img.src=state.bgImageSrc; });
+}
 
+function readUI(){
+  state.quote=$('#quoteText').value;
+  state.author=$('#authorText').value;
+  state.fontFamily=$('#fontFamily').value;
+  state.fontWeight=Number($('#fontWeight').value);
+  state.fontSize=Number($('#fontSize').value);
+  state.lineHeight=Number($('#lineHeight').value)/100;
+  state.letterSpacing=Number($('#letterSpacing').value);
+  state.textWidth=Number($('#textWidth').value);
+  state.textX=Number($('#textX').value);
+  state.textY=Number($('#textY').value);
+  state.textColor=$('#textColor').value;
+  state.authorColor=$('#authorColor').value;
+  state.shadowEnabled=$('#shadowEnabled').checked;
+  state.shadowStrength=Number($('#shadowStrength').value);
+  state.bgMode=$('#bgMode').value;
+  state.bgColor=$('#bgColor').value;
+  state.gradientA=$('#gradientA').value;
+  state.gradientB=$('#gradientB').value;
+  state.gradientAngle=Number($('#gradientAngle').value);
+  state.imageZoom=Number($('#imageZoom').value);
+  state.overlayOpacity=Number($('#overlayOpacity').value);
+}
 
-    // --- Canvas Drawing Function ---
-    function drawCanvas() {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+function syncUI(){
+  $('#quoteText').value=state.quote; $('#authorText').value=state.author;
+  $('#sizePreset').value=state.preset || 'custom';
+  $('#canvasWidth').value=state.width; $('#canvasHeight').value=state.height;
+  $('#fontFamily').value=state.fontFamily; $('#fontWeight').value=String(state.fontWeight); $('#fontSize').value=state.fontSize;
+  $('#lineHeight').value=Math.round(state.lineHeight*100); $('#letterSpacing').value=state.letterSpacing; $('#textWidth').value=state.textWidth;
+  $('#textX').value=state.textX; $('#textY').value=state.textY; $('#textColor').value=state.textColor; $('#authorColor').value=state.authorColor;
+  $('#shadowEnabled').checked=state.shadowEnabled; $('#shadowStrength').value=state.shadowStrength;
+  $('#bgMode').value=state.bgMode; $('#bgColor').value=state.bgColor; $('#gradientA').value=state.gradientA; $('#gradientB').value=state.gradientB; $('#gradientAngle').value=state.gradientAngle;
+  $('#imageZoom').value=state.imageZoom; $('#overlayOpacity').value=state.overlayOpacity;
+  $$('#alignGroup button').forEach(b=>b.classList.toggle('active',b.dataset.align===state.align));
+  syncLabels(); syncConditionalControls(); resizeCanvas();
+}
 
-        // Background
-        if (bgTypeEl.value === 'image' && currentBgImage && currentBgImage.complete) {
-            // Apply brightness filter
-            const brightness = imageBrightnessEl.value / 100;
-            ctx.filter = `brightness(${brightness})`;
-            
-            // Draw image, maintaining aspect ratio and covering canvas
-            const canvasAspect = canvasEl.width / canvasEl.height;
-            const imageAspect = currentBgImage.width / currentBgImage.height;
-            let sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight;
+function syncLabels(){
+  $('#charCount').textContent=`${state.quote.length} chars`;
+  $('#fontSizeValue').textContent=`${state.fontSize} px`; $('#lineHeightValue').textContent=state.lineHeight.toFixed(2);
+  $('#letterSpacingValue').textContent=`${state.letterSpacing} px`; $('#textWidthValue').textContent=`${state.textWidth}%`;
+  $('#textXValue').textContent=`${state.textX}%`; $('#textYValue').textContent=`${state.textY}%`;
+  $('#shadowStrengthValue').textContent=`${state.shadowStrength}%`; $('#gradientAngleValue').textContent=`${state.gradientAngle}°`;
+  $('#imageZoomValue').textContent=`${state.imageZoom}%`; $('#overlayOpacityValue').textContent=`${state.overlayOpacity}%`;
+  [['textColor','textColorHex'],['authorColor','authorColorHex'],['bgColor','bgColorHex'],['gradientA','gradientAHex'],['gradientB','gradientBHex']].forEach(([input,label])=>$('#'+label).textContent=$('#'+input).value.toUpperCase());
+}
 
-            if (canvasAspect > imageAspect) { // Canvas is wider than image
-                sWidth = currentBgImage.width;
-                sHeight = currentBgImage.width / canvasAspect;
-                sx = 0;
-                sy = (currentBgImage.height - sHeight) / 2;
-            } else { // Canvas is taller or same aspect as image
-                sHeight = currentBgImage.height;
-                sWidth = currentBgImage.height * canvasAspect;
-                sy = 0;
-                sx = (currentBgImage.width - sWidth) / 2;
-            }
-            dx = 0;
-            dy = 0;
-            dWidth = canvasEl.width;
-            dHeight = canvasEl.height;
-            
-            ctx.drawImage(currentBgImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-            ctx.filter = 'none'; // Reset filter
-        } else {
-            ctx.fillStyle = bgColorEl.value;
-            ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-        }
+function syncConditionalControls(){
+  const mode=state.bgMode;
+  $('#solidControls').hidden=mode!=='solid'; $('#gradientControls').hidden=mode!=='gradient'; $('#imageControls').hidden=mode!=='image';
+  $('#shadowStrengthGroup').hidden=!state.shadowEnabled;
+  const custom=$('#sizePreset').value==='custom'; $('#customSizeGroup').hidden=!custom; $('#applyCustomSize').hidden=!custom;
+  const jpeg=$('#exportFormat').value==='jpeg'; $('#qualityWrap').hidden=!jpeg;
+}
 
-        // Text properties
-        const text = quoteTextEl.value;
-        const fontSize = fontSizeEl.value;
-        const fontFamily = fontFamilyEl.value;
-        ctx.font = `${fontSize}px ${fontFamily}`;
-        ctx.fillStyle = fontColorEl.value;
-        ctx.textAlign = currentTextAlign;
+function resizeCanvas(){
+  canvas.width=state.width; canvas.height=state.height;
+  const matched=Object.values(sizes).find(s=>s.width===state.width&&s.height===state.height);
+  $('#canvasLabel').textContent=`${matched?.label||'Custom'} · ${state.width} × ${state.height}`;
+  requestAnimationFrame(updatePreviewScale);
+}
 
-        // Text effects
-        if (textGlowEl.checked) {
-            ctx.shadowColor = glowColorEl.value;
-            ctx.shadowBlur = parseInt(glowBlurEl.value);
-        } else {
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-        }
+function updatePreviewScale(){
+  const rect=canvas.getBoundingClientRect();
+  if(!rect.width)return;
+  const pct=Math.round((rect.width/state.width)*100);
+  $('#previewScale').textContent=pct>=98?'100%':`${pct}%`;
+}
 
-        // Calculate text position
-        const lines = text.split('\n');
-        const lineHeight = fontSize * 1.2; // Approximate line height
-        const totalTextHeight = lines.length * lineHeight;
-        
-        // Vertical position based on percentage of canvas height, adjusted for total text height
-        const yPercentage = textYPositionEl.value / 100;
-        let startY = (canvasEl.height - totalTextHeight) * yPercentage + (lineHeight * 0.8); // 0.8 to adjust baseline
+function gradientPoints(angleDeg,w,h){
+  const r=angleDeg*Math.PI/180, x=Math.cos(r), y=Math.sin(r), cx=w/2,cy=h/2, len=Math.abs(w*x)+Math.abs(h*y);
+  return [cx-x*len/2,cy-y*len/2,cx+x*len/2,cy+y*len/2];
+}
 
-        // Ensure text starts within canvas if it's too tall
-        if (startY < lineHeight * 0.8) startY = lineHeight * 0.8;
-        if (startY + totalTextHeight - (lineHeight * 0.8) > canvasEl.height) {
-             startY = canvasEl.height - totalTextHeight + (lineHeight*0.8) ;
-        }
+function drawBackground(){
+  ctx.save(); ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(state.bgMode==='image' && bgImage){
+    const scale=Math.max(canvas.width/bgImage.width,canvas.height/bgImage.height)*(state.imageZoom/100);
+    const w=bgImage.width*scale,h=bgImage.height*scale;
+    ctx.drawImage(bgImage,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  }else if(state.bgMode==='gradient'){
+    const p=gradientPoints(state.gradientAngle,canvas.width,canvas.height),g=ctx.createLinearGradient(...p); g.addColorStop(0,state.gradientA);g.addColorStop(1,state.gradientB);ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
+  }else{ctx.fillStyle=state.bgColor;ctx.fillRect(0,0,canvas.width,canvas.height)}
+  if(state.overlayOpacity>0){ctx.fillStyle=`rgba(0,0,0,${state.overlayOpacity/100})`;ctx.fillRect(0,0,canvas.width,canvas.height)}
+  ctx.restore();
+}
 
+function setFont(size,weight=state.fontWeight,family=state.fontFamily){ ctx.font=`${weight} ${size}px "${family}", sans-serif`; }
+function measureSpaced(text,spacing){
+  if(!spacing)return ctx.measureText(text).width;
+  return ctx.measureText(text).width+Math.max(0,text.length-1)*spacing;
+}
+function drawSpacedText(text,x,y,spacing,align,fill=true){
+  if(!spacing){ctx.textAlign=align; (fill?ctx.fillText.bind(ctx):ctx.strokeText.bind(ctx))(text,x,y);return;}
+  const total=measureSpaced(text,spacing); let start=x;
+  if(align==='center')start=x-total/2; if(align==='right')start=x-total;
+  ctx.textAlign='left';
+  for(const ch of text){ if(fill)ctx.fillText(ch,start,y);else ctx.strokeText(ch,start,y); start+=ctx.measureText(ch).width+spacing; }
+}
 
-        lines.forEach((line, index) => {
-            let x;
-            if (currentTextAlign === 'left') {
-                x = 20; // Padding from left
-            } else if (currentTextAlign === 'right') {
-                x = canvasEl.width - 20; // Padding from right
-            } else { // Center
-                x = canvasEl.width / 2;
-            }
-            const currentLineY = startY + (index * lineHeight);
+function wrapParagraph(text,maxWidth,spacing){
+  if(!text.trim())return [''];
+  const words=text.trim().split(/\s+/); const lines=[]; let line='';
+  for(const word of words){
+    const candidate=line?`${line} ${word}`:word;
+    if(measureSpaced(candidate,spacing)<=maxWidth){line=candidate;continue;}
+    if(line)lines.push(line);
+    if(measureSpaced(word,spacing)<=maxWidth){line=word;continue;}
+    let part='';
+    for(const ch of word){ const next=part+ch; if(part&&measureSpaced(next,spacing)>maxWidth){lines.push(part);part=ch}else part=next; }
+    line=part;
+  }
+  if(line)lines.push(line); return lines;
+}
+function wrappedLines(text,maxWidth,spacing){
+  return text.split(/\n/).flatMap((p,i,arr)=>{const lines=wrapParagraph(p,maxWidth,spacing);return i<arr.length-1?[...lines,'']:lines});
+}
 
-            // Outline
-            if (textOutlineEl.checked) {
-                ctx.strokeStyle = outlineColorEl.value;
-                ctx.lineWidth = parseInt(outlineWidthEl.value);
-                ctx.strokeText(line, x, currentLineY);
-            }
-            ctx.fillText(line, x, currentLineY);
-        });
-        
-        // Reset shadow for next draw cycle if not used by other elements
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-    }
+function drawText(){
+  const quote=state.quote.trim()||'Write something worth remembering…';
+  const maxWidth=canvas.width*(state.textWidth/100);
+  const scale=Math.min(canvas.width/1080,canvas.height/1080);
+  const quoteSize=clamp(state.fontSize*scale,18,220);
+  const authorSize=clamp(quoteSize*.28,14,44);
+  const letter=state.letterSpacing*scale;
+  setFont(quoteSize);
+  const lines=wrappedLines(quote,maxWidth,letter);
+  const lineH=quoteSize*state.lineHeight;
+  const authorGap=state.author.trim()?quoteSize*.62:0;
+  const total=lines.length*lineH+authorGap+(state.author.trim()?authorSize*1.3:0);
+  let startY=canvas.height*(state.textY/100)-total/2+quoteSize*.82;
+  startY=clamp(startY,quoteSize,canvas.height-total+quoteSize*.4);
+  let x=canvas.width*(state.textX/100);
+  const half=maxWidth/2;
+  if(state.align==='left')x=clamp(x,canvas.width*.04,canvas.width-maxWidth-canvas.width*.04);
+  if(state.align==='right')x=clamp(x,maxWidth+canvas.width*.04,canvas.width*.96);
+  if(state.align==='center')x=clamp(x,half+canvas.width*.03,canvas.width-half-canvas.width*.03);
 
-    // --- Event Listeners for Controls ---
-    [quoteTextEl, fontFamilyEl, fontSizeEl, fontColorEl, glowColorEl, glowBlurEl, outlineColorEl, outlineWidthEl, bgColorEl, textYPositionEl, imageBrightnessEl].forEach(el => {
-        el.addEventListener('input', drawCanvas);
-        el.addEventListener('change', drawCanvas); // For color pickers
-    });
+  ctx.save();
+  ctx.fillStyle=state.textColor; ctx.textBaseline='alphabetic';
+  if(state.shadowEnabled){const a=.12+.48*(state.shadowStrength/100);ctx.shadowColor=`rgba(0,0,0,${a})`;ctx.shadowBlur=quoteSize*.16*(state.shadowStrength/100);ctx.shadowOffsetY=quoteSize*.06*(state.shadowStrength/100)}
+  lines.forEach((line,index)=>drawSpacedText(line,x,startY+index*lineH,letter,state.align,true));
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  if(state.author.trim()){
+    setFont(authorSize,600,'Inter'); ctx.fillStyle=state.authorColor;
+    const authorY=startY+lines.length*lineH+authorGap-authorSize*.3;
+    const prefix=state.align==='center'?'— ':''; drawSpacedText(prefix+state.author.trim(),x,authorY,Math.max(0,letter*.2),state.align,true);
+  }
+  ctx.restore();
+}
 
-    fontSizeEl.addEventListener('input', () => fontSizeValueEl.textContent = `${fontSizeEl.value}px`);
-    glowBlurEl.addEventListener('input', () => glowBlurValueEl.textContent = glowBlurEl.value);
-    outlineWidthEl.addEventListener('input', () => outlineWidthValueEl.textContent = outlineWidthEl.value);
-    textYPositionEl.addEventListener('input', () => textYPositionValueEl.textContent = `${textYPositionEl.value}%`);
-    imageBrightnessEl.addEventListener('input', () => imageBrightnessValueEl.textContent = `${imageBrightnessEl.value}%`);
+function draw(){ drawBackground(); drawText(); syncLabels(); }
 
+function applyPreset(key){
+  if(!sizes[key])return; pushUndo(); const s=sizes[key]; state.preset=key;state.width=s.width;state.height=s.height; $('#canvasWidth').value=s.width;$('#canvasHeight').value=s.height;resizeCanvas();draw();
+}
 
-    textAlignButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            textAlignButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            currentTextAlign = button.dataset.align;
-            drawCanvas();
-        });
-    });
+function applyTemplate(name){
+  if(!templates[name])return; pushUndo(); Object.assign(state,templates[name]); state.bgImageSrc='';bgImage=null; syncUI();draw();toast(`${name[0].toUpperCase()+name.slice(1)} template applied`);
+}
 
-    textGlowEl.addEventListener('change', () => {
-        glowOptionsEl.style.display = textGlowEl.checked ? 'block' : 'none';
-        drawCanvas();
-    });
+function resetDesign(){ pushUndo(); const size={preset:state.preset,width:state.width,height:state.height};state={...cloneState(defaults),...size};bgImage=null;syncUI();draw();toast('Design reset'); }
 
-    textOutlineEl.addEventListener('change', () => {
-        outlineOptionsEl.style.display = textOutlineEl.checked ? 'block' : 'none';
-        drawCanvas();
-    });
+function safeFilename(){ const base=(state.quote||'quote').trim().slice(0,36).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'quote'; return base; }
+function exportImage(){
+  draw(); const format=$('#exportFormat').value; const mime=format==='jpeg'?'image/jpeg':'image/png'; const quality=Number($('#jpegQuality').value||.92); const a=document.createElement('a'); a.download=`${safeFilename()}-${state.width}x${state.height}.${format==='jpeg'?'jpg':'png'}`; a.href=canvas.toDataURL(mime,quality); a.click(); toast('Image exported');
+}
 
-    bgTypeEl.addEventListener('change', () => {
-        if (bgTypeEl.value === 'color') {
-            bgColorGroupEl.style.display = 'block';
-            bgImageGroupEl.style.display = 'none';
-            currentBgImage = null; // Clear loaded image if switching to color
-        } else {
-            bgColorGroupEl.style.display = 'none';
-            bgImageGroupEl.style.display = 'block';
-        }
-        drawCanvas();
-    });
+function previewCss(stateValue){
+  if(stateValue.bgMode==='gradient')return `linear-gradient(${stateValue.gradientAngle}deg,${stateValue.gradientA},${stateValue.gradientB})`;
+  if(stateValue.bgMode==='solid')return stateValue.bgColor;
+  if(stateValue.bgImageSrc)return `linear-gradient(rgba(0,0,0,.15),rgba(0,0,0,.15)),url(${stateValue.bgImageSrc}) center/cover`;
+  return '#16181d';
+}
 
-    bgImageEl.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                currentBgImage = new Image();
-                currentBgImage.onload = () => {
-                    drawCanvas(); // Draw once image is loaded
-                };
-                currentBgImage.onerror = () => {
-                    console.error("Error loading image.");
-                    currentBgImage = null; // Reset if error
-                    // Optionally switch back to color background or show placeholder
-                    bgTypeEl.value = 'color'; 
-                    bgTypeEl.dispatchEvent(new Event('change')); // Trigger change to update UI
-                    alert("Failed to load image. Please try a different file.");
-                };
-                currentBgImage.src = e.target.result;
-            };
-            reader.onerror = () => {
-                console.error("Error reading file.");
-                alert("Failed to read image file.");
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    applyCanvasSizeBtn.addEventListener('click', () => {
-        const newWidth = parseInt(canvasWidthInput.value);
-        const newHeight = parseInt(canvasHeightInput.value);
-        if (newWidth >= 100 && newWidth <= 2000 && newHeight >= 100 && newHeight <= 2000) {
-            canvasEl.width = newWidth;
-            canvasEl.height = newHeight;
-            drawCanvas();
-        } else {
-            alert("Please enter dimensions between 100px and 2000px.");
-        }
-    });
+function getDrafts(){ try{return JSON.parse(localStorage.getItem('quote-studio-drafts')||'[]')}catch{return[]} }
+function setDrafts(items){ try{localStorage.setItem('quote-studio-drafts',JSON.stringify(items));return true}catch{toast('Draft is too large for browser storage');return false} }
+function saveDraft(){
+  readUI(); let snapshot=cloneState();
+  if(snapshot.bgImageSrc.length>900000){snapshot.bgImageSrc='';toast('Draft saved without large background image');}
+  const drafts=getDrafts(); const item={id:Date.now(),savedAt:new Date().toISOString(),state:snapshot}; drafts.unshift(item); if(setDrafts(drafts.slice(0,12))){renderDrafts();toast('Draft saved locally');}
+}
+function renderDrafts(){
+  const list=$('#draftList'),drafts=getDrafts();list.innerHTML='';
+  if(!drafts.length){list.innerHTML='<div class="empty-drafts">No saved drafts yet.</div>';return}
+  drafts.forEach(item=>{const card=document.createElement('article');card.className='draft-card';const preview=document.createElement('div');preview.className='draft-preview';preview.style.background=previewCss(item.state);const title=document.createElement('b');title.textContent=item.state.quote||'Untitled quote';const time=document.createElement('small');time.textContent=new Date(item.savedAt).toLocaleString();const del=document.createElement('button');del.className='draft-delete';del.textContent='×';del.title='Delete draft';del.onclick=e=>{e.stopPropagation();setDrafts(getDrafts().filter(d=>d.id!==item.id));renderDrafts();toast('Draft deleted')};card.onclick=()=>{pushUndo();state={...cloneState(defaults),...cloneState(item.state)};loadImageFromState().then(()=>{syncUI();draw();toast('Draft loaded')})};card.append(preview,title,time,del);list.append(card)});
+}
 
+function bindLiveControl(selector,event='input'){
+  $(selector).addEventListener(event,()=>{readUI();syncConditionalControls();draw()});
+}
+function bindUndoBoundary(selector){ const el=$(selector); el.addEventListener('pointerdown',pushUndo,{passive:true}); el.addEventListener('focus',()=>{if(el.matches('textarea,input[type=text],select'))pushUndo()}); }
 
-    // --- Download Functionality ---
-    downloadBtn.addEventListener('click', () => {
-        // Temporarily set background to ensure it's part of the downloaded image if it's transparent
-        const originalBg = canvasEl.style.backgroundColor;
-        if (!currentBgImage && bgColorEl.value.slice(-2) === "00" && bgColorEl.value.length === 9) { // Check for transparent hex #RRGGBBAA
-             // If transparent, draw a default opaque color first
-            const tempCtx = document.createElement('canvas').getContext('2d');
-            tempCtx.canvas.width = canvasEl.width;
-            tempCtx.canvas.height = canvasEl.height;
-            tempCtx.fillStyle = '#000000'; // Opaque black
-            tempCtx.fillRect(0, 0, tempCtx.canvas.width, tempCtx.canvas.height);
-            tempCtx.drawImage(canvasEl, 0, 0);
-            const dataURL = tempCtx.canvas.toDataURL('image/png');
-            triggerDownload(dataURL);
-        } else if (!currentBgImage && ctx.fillStyle.startsWith('rgba') && ctx.fillStyle.endsWith(', 0)')) { // Check for rgba(...,0)
-            const tempCtx = document.createElement('canvas').getContext('2d');
-            tempCtx.canvas.width = canvasEl.width;
-            tempCtx.canvas.height = canvasEl.height;
-            tempCtx.fillStyle = '#000000'; // Opaque black
-            tempCtx.fillRect(0, 0, tempCtx.canvas.width, tempCtx.canvas.height);
-            tempCtx.drawImage(canvasEl, 0, 0);
-            const dataURL = tempCtx.canvas.toDataURL('image/png');
-            triggerDownload(dataURL);
-        }
-        else {
-             const dataURL = canvasEl.toDataURL('image/png');
-             triggerDownload(dataURL);
-        }
-        canvasEl.style.backgroundColor = originalBg;
-    });
+async function init(){
+  await document.fonts.ready;
+  syncUI(); draw(); renderDrafts(); updateUndoButtons();
 
-    function triggerDownload(dataURL) {
-        const link = document.createElement('a');
-        link.download = 'quote-image.png';
-        link.href = dataURL;
-        document.body.appendChild(link); // Required for Firefox
-        link.click();
-        document.body.removeChild(link);
-    }
+  const live=['#quoteText','#authorText','#fontFamily','#fontWeight','#fontSize','#lineHeight','#letterSpacing','#textWidth','#textX','#textY','#textColor','#authorColor','#shadowEnabled','#shadowStrength','#bgMode','#bgColor','#gradientA','#gradientB','#gradientAngle','#imageZoom','#overlayOpacity'];
+  live.forEach(sel=>{bindLiveControl(sel,$(sel).type==='checkbox'||$(sel).tagName==='SELECT'?'change':'input');bindUndoBoundary(sel)});
 
+  $('#sizePreset').addEventListener('change',e=>{syncConditionalControls();if(e.target.value!=='custom')applyPreset(e.target.value)});
+  $('#applyCustomSize').onclick=()=>{const w=clamp(Number($('#canvasWidth').value),320,4096),h=clamp(Number($('#canvasHeight').value),320,4096);pushUndo();state.preset='custom';state.width=w;state.height=h;resizeCanvas();draw()};
+  $$('#alignGroup button').forEach(btn=>btn.onclick=()=>{pushUndo();state.align=btn.dataset.align;$$('#alignGroup button').forEach(b=>b.classList.toggle('active',b===btn));draw()});
+  $$('.template-card').forEach(btn=>btn.onclick=()=>applyTemplate(btn.dataset.template));
 
-    // --- Quote History Functionality ---
-    function renderHistory() {
-        quoteHistoryEl.innerHTML = ''; // Clear existing items
-        if (quoteHistory.length === 0) {
-            quoteHistoryEl.innerHTML = '<p>No saved quotes yet.</p>';
-            return;
-        }
-        quoteHistory.forEach((item, index) => {
-            const historyItemDiv = document.createElement('div');
-            historyItemDiv.classList.add('history-item');
-            historyItemDiv.dataset.index = index;
+  $('#bgImage').addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;if(file.size>8*1024*1024){toast('Choose an image smaller than 8 MB');return}pushUndo();const reader=new FileReader();reader.onload=()=>{state.bgImageSrc=reader.result;loadImageFromState().then(()=>{state.bgMode='image';$('#bgMode').value='image';syncConditionalControls();draw();toast('Background loaded')})};reader.readAsDataURL(file)});
 
-            // Create a small canvas for preview
-            const previewCanvas = document.createElement('canvas');
-            previewCanvas.width = 150; // Small preview size
-            previewCanvas.height = 100;
-            const prevCtx = previewCanvas.getContext('2d');
-            
-            // Draw a miniature version (simplified for brevity, ideally reuse drawCanvas with scaling)
-            if (item.bgType === 'image' && item.bgImageSrc) {
-                const img = new Image();
-                img.onload = () => {
-                    const imgAspect = img.width / img.height;
-                    const canvAspect = previewCanvas.width / previewCanvas.height;
-                    let sx=0, sy=0, sw=img.width, sh=img.height;
-                    if (canvAspect > imgAspect) { sw = img.width; sh = img.width / canvAspect; sx = 0; sy = (img.height - sh) / 2; } 
-                    else { sh = img.height; sw = img.height * canvAspect; sy = 0; sx = (img.width - sw) / 2; }
-                    prevCtx.drawImage(img, sx, sy, sw, sh, 0, 0, previewCanvas.width, previewCanvas.height);
-                    drawMiniText(prevCtx, item, previewCanvas.width, previewCanvas.height);
-                }
-                img.src = item.bgImageSrc; // Store DataURL of image
-            } else {
-                prevCtx.fillStyle = item.bgColor;
-                prevCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-                drawMiniText(prevCtx, item, previewCanvas.width, previewCanvas.height);
-            }
-            
-            historyItemDiv.appendChild(previewCanvas);
+  $('#undoBtn').onclick=undo; $('#redoBtn').onclick=redo; $('#resetBtn').onclick=resetDesign;
+  $('#saveDraftBtn').onclick=saveDraft; $('#exportBtn').onclick=exportImage; $('#exportTopBtn').onclick=()=>{document.querySelector('.export-bar').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(exportImage,250)};
+  $('#exportFormat').onchange=syncConditionalControls;
+  $('#clearDraftsBtn').onclick=()=>{if(!getDrafts().length)return;localStorage.removeItem('quote-studio-drafts');renderDrafts();toast('Drafts cleared')};
 
-            const textPreview = document.createElement('p');
-            textPreview.textContent = item.quoteText.substring(0, 30) + (item.quoteText.length > 30 ? '...' : '');
-            historyItemDiv.appendChild(textPreview);
+  window.addEventListener('resize',updatePreviewScale);
+  window.addEventListener('keydown',e=>{const mod=e.ctrlKey||e.metaKey;if(mod&&e.key.toLowerCase()==='s'){e.preventDefault();saveDraft()}if(mod&&e.key.toLowerCase()==='z'&&!e.shiftKey){e.preventDefault();undo()}if(mod&&e.key.toLowerCase()==='z'&&e.shiftKey){e.preventDefault();redo()}});
+}
 
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.classList.add('delete-history-item-btn');
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation(); // Prevent loading the item when deleting
-                deleteHistoryItem(index);
-            };
-            historyItemDiv.appendChild(deleteBtn);
-
-            historyItemDiv.addEventListener('click', () => loadFromHistory(item));
-            quoteHistoryEl.appendChild(historyItemDiv);
-        });
-    }
-    
-    function drawMiniText(pCtx, item, w, h) {
-        pCtx.font = `${item.fontSize / 4}px ${item.fontFamily}`; // Scaled font size
-        pCtx.fillStyle = item.fontColor;
-        pCtx.textAlign = item.textAlign;
-        if (item.textGlow) {
-            pCtx.shadowColor = item.glowColor;
-            pCtx.shadowBlur = item.glowBlur / 4; // Scaled
-        }
-        const lines = item.quoteText.split('\n');
-        const lineHeight = (item.fontSize/4) * 1.2;
-        const totalTextHeight = lines.length * lineHeight;
-        const yPercentage = item.textYPosition / 100;
-        let startY = (h - totalTextHeight) * yPercentage + (lineHeight * 0.8);
-        if (startY < lineHeight * 0.8) startY = lineHeight * 0.8;
-
-        lines.forEach((line, idx) => {
-            let xPos;
-            if (item.textAlign === 'left') xPos = 5;
-            else if (item.textAlign === 'right') xPos = w - 5;
-            else xPos = w / 2;
-            const currentLineY = startY + (idx * lineHeight);
-            if (item.textOutline) {
-                pCtx.strokeStyle = item.outlineColor;
-                pCtx.lineWidth = item.outlineWidth / 4 > 0.5 ? item.outlineWidth / 4 : 0.5; // Min outline
-                pCtx.strokeText(line.substring(0,20), xPos, currentLineY); // Shorter text for preview
-            }
-            pCtx.fillText(line.substring(0,20), xPos, currentLineY);
-        });
-        pCtx.shadowColor = 'transparent';
-        pCtx.shadowBlur = 0;
-    }
-
-
-    saveToHistoryBtn.addEventListener('click', () => {
-        const currentSettings = {
-            quoteText: quoteTextEl.value,
-            fontFamily: fontFamilyEl.value,
-            fontSize: fontSizeEl.value,
-            fontColor: fontColorEl.value,
-            textAlign: currentTextAlign,
-            textYPosition: textYPositionEl.value,
-            textGlow: textGlowEl.checked,
-            glowColor: glowColorEl.value,
-            glowBlur: glowBlurEl.value,
-            textOutline: textOutlineEl.checked,
-            outlineColor: outlineColorEl.value,
-            outlineWidth: outlineWidthEl.value,
-            bgType: bgTypeEl.value,
-            bgColor: bgColorEl.value,
-            bgImageSrc: (bgTypeEl.value === 'image' && currentBgImage) ? currentBgImage.src : null,
-            imageBrightness: imageBrightnessEl.value,
-            canvasWidth: canvasEl.width,
-            canvasHeight: canvasEl.height
-        };
-        quoteHistory.unshift(currentSettings); // Add to the beginning
-        if (quoteHistory.length > 20) quoteHistory.pop(); // Limit history size
-        localStorage.setItem('quoteHistory', JSON.stringify(quoteHistory));
-        renderHistory();
-    });
-
-    function loadFromHistory(item) {
-        quoteTextEl.value = item.quoteText;
-        fontFamilyEl.value = item.fontFamily;
-        fontSizeEl.value = item.fontSize;
-        fontSizeValueEl.textContent = `${item.fontSize}px`;
-        fontColorEl.value = item.fontColor;
-        
-        textAlignButtons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.align === item.textAlign) {
-                btn.classList.add('active');
-            }
-        });
-        currentTextAlign = item.textAlign;
-        textYPositionEl.value = item.textYPosition;
-        textYPositionValueEl.textContent = `${item.textYPosition}%`;
-
-        textGlowEl.checked = item.textGlow;
-        glowOptionsEl.style.display = item.textGlow ? 'block' : 'none';
-        glowColorEl.value = item.glowColor;
-        glowBlurEl.value = item.glowBlur;
-        glowBlurValueEl.textContent = item.glowBlur;
-
-        textOutlineEl.checked = item.textOutline;
-        outlineOptionsEl.style.display = item.textOutline ? 'block' : 'none';
-        outlineColorEl.value = item.outlineColor;
-        outlineWidthEl.value = item.outlineWidth;
-        outlineWidthValueEl.textContent = item.outlineWidth;
-        
-        imageBrightnessEl.value = item.imageBrightness || 100;
-        imageBrightnessValueEl.textContent = `${imageBrightnessEl.value}%`;
-
-        bgTypeEl.value = item.bgType;
-        if (item.bgType === 'image' && item.bgImageSrc) {
-            bgColorGroupEl.style.display = 'none';
-            bgImageGroupEl.style.display = 'block';
-            currentBgImage = new Image();
-            currentBgImage.onload = () => {
-                 if (item.canvasWidth && item.canvasHeight) {
-                    canvasEl.width = item.canvasWidth;
-                    canvasEl.height = item.canvasHeight;
-                    canvasWidthInput.value = item.canvasWidth;
-                    canvasHeightInput.value = item.canvasHeight;
-                }
-                drawCanvas();
-            };
-            currentBgImage.src = item.bgImageSrc;
-            bgImageEl.value = ''; // Clear file input
-        } else {
-            bgColorGroupEl.style.display = 'block';
-            bgImageGroupEl.style.display = 'none';
-            bgColorEl.value = item.bgColor;
-            currentBgImage = null;
-             if (item.canvasWidth && item.canvasHeight) {
-                canvasEl.width = item.canvasWidth;
-                canvasEl.height = item.canvasHeight;
-                canvasWidthInput.value = item.canvasWidth;
-                canvasHeightInput.value = item.canvasHeight;
-            }
-            drawCanvas();
-        }
-    }
-    
-    function deleteHistoryItem(index) {
-        quoteHistory.splice(index, 1);
-        localStorage.setItem('quoteHistory', JSON.stringify(quoteHistory));
-        renderHistory();
-    }
-
-    toggleHistoryBtn.addEventListener('click', () => {
-        const isHidden = quoteHistoryEl.style.display === 'none';
-        quoteHistoryEl.style.display = isHidden ? 'grid' : 'none'; // Use grid for layout
-        toggleHistoryBtn.textContent = isHidden ? 'Hide History' : 'Show History';
-    });
-    
-    clearHistoryBtn.addEventListener('click', () => {
-        if (confirm("Are you sure you want to clear all saved history? This cannot be undone.")) {
-            quoteHistory = [];
-            localStorage.removeItem('quoteHistory');
-            renderHistory();
-        }
-    });
-
-
-    // --- Initial Render ---
-    // Set default active alignment button
-    document.querySelector(`.align-btn[data-align='${currentTextAlign}']`).classList.add('active');
-    // Trigger initial display of conditional options
-    glowOptionsEl.style.display = textGlowEl.checked ? 'block' : 'none';
-    outlineOptionsEl.style.display = textOutlineEl.checked ? 'block' : 'none';
-    if (bgTypeEl.value === 'color') {
-        bgColorGroupEl.style.display = 'block';
-        bgImageGroupEl.style.display = 'none';
-    } else {
-        bgColorGroupEl.style.display = 'none';
-        bgImageGroupEl.style.display = 'block';
-    }
-    // Update slider values
-    fontSizeValueEl.textContent = `${fontSizeEl.value}px`;
-    glowBlurValueEl.textContent = glowBlurEl.value;
-    outlineWidthValueEl.textContent = outlineWidthEl.value;
-    textYPositionValueEl.textContent = `${textYPositionEl.value}%`;
-    imageBrightnessValueEl.textContent = `${imageBrightnessEl.value}%`;
-
-    drawCanvas(); // Initial draw
-    renderHistory(); // Render history on load
-});
+init();
